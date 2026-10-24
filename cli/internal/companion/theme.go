@@ -26,7 +26,7 @@ func RunTerminal(args []string, invoked string, out, errOut *os.File) int {
 
 // Use the terminal background; never change the user's palette or startup files.
 func banner(w io.Writer, animate bool) {
- const gold = "\x1b[33m"
+ const gold = "\x1b[40;38;5;178m"
  const reset = "\x1b[0m"
  if animate {
   for _, frame := range []string{"o . . .", ". o . .", ". . o .", ". . . o"} {
