@@ -5,4 +5,4 @@ import (
 	"os"
 )
 
-func main() { os.Exit(companion.Run(os.Args[1:], os.Args[0], os.Stdout, os.Stderr)) }
+func main() { os.Exit(companion.RunTerminal(os.Args[1:], os.Args[0], os.Stdout, os.Stderr)) }
