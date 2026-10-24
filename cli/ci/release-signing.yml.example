@@ -1,0 +1,26 @@
+# DORMANT — not in .github/workflows. Activate only after the owner selects the
+# repository, pins action SHAs, provides signing accounts and approves. No upload step.
+name: Signed release candidate (manual)
+on: { workflow_dispatch: {} }
+permissions: { contents: read, id-token: write }  # id-token only for keyless cosign
+jobs:
+  build-sign-verify:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: cli } }
+    steps:
+      - uses: actions/checkout@REQUIRES_AUDITED_FULL_COMMIT_SHA
+        with: { persist-credentials: false }
+      - uses: actions/setup-go@REQUIRES_AUDITED_FULL_COMMIT_SHA
+        with: { go-version: '1.25.7', cache: false }
+      - uses: sigstore/cosign-installer@REQUIRES_AUDITED_FULL_COMMIT_SHA
+      - run: go test -count=1 ./... && go vet ./...
+      - run: python3 scripts/build_source.py --out "$RUNNER_TEMP/stage"
+      - run: |
+          cd "$RUNNER_TEMP/stage"
+          for f in *.zip; do cosign sign-blob --yes --output-signature "$f.sig" --output-certificate "$f.pem" "$f"; done
+          for f in *.zip; do cosign verify-blob --signature "$f.sig" --certificate "$f.pem" \
+            --certificate-identity "https://github.com/OWNER_REPO_REQUIRED/.github/workflows/OWNER_APPROVED_WORKFLOW_REQUIRED.yml@refs/tags/OWNER_APPROVED_TAG_REQUIRED" \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com "$f"; done
+      - run: go run ./cmd/evolution release verify --dir "$RUNNER_TEMP/stage"
+      # macOS notarization and Windows Authenticode jobs: add on macos/windows runners
+      # once owner accounts exist. Artifacts stay in the run for manual owner review.
